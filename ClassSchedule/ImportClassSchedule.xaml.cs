@@ -149,7 +149,7 @@ namespace ClassSchedule
         }
 
         private string[] GetTdValues(string tr) {
-            var tdRE = new Regex(@"(?:<td(?:\s[^>]*)?\shidevalue='([\s\S]+?)'(?:\s[^>]*)?>|<td(?:\s[^>]*)?>([\s\S]+?))<br></td>");
+            var tdRE = new Regex(@"(?:<td(?:\s[^>]*)?\shidevalue='([\s\S]*?)'(?:\s[^>]*)?>|<td(?:\s[^>]*)?>([\s\S]*?))<br></td>");
             var matches = tdRE.Matches(tr);
 
             var values = new List<string>();
