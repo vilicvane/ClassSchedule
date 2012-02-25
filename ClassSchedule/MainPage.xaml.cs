@@ -37,25 +37,34 @@ namespace ClassSchedule {
 
             for (var i = 0; i < days.Length; i++ ) {
                 var day = days[i];
-                var item = new PivotItem();
+                var item = new PivotItem() {
+                };
+
                 item.Header = day;
 
-                var listBox = new ListBox();
+                var listBox = new ListBox() {
+                    VerticalAlignment = VerticalAlignment.Stretch
+                };
+
                 var emptyText = new TextBlock() {
                     Text = "empty",
                     Style = Resources["PhoneTextSubtleStyle"] as Style,
-                    HorizontalAlignment = HorizontalAlignment.Center,
-                    Margin = new Thickness() { Top = 230 }
+                    Margin = new Thickness() { Top = -50 }
                 };
 
                 listBoxes[i] = listBox;
                 emptyTexts[i] = emptyText;
+                /*
+                var stackPanel = new StackPanel() {
 
-                var stackPanel = new StackPanel();
+                };
                 stackPanel.Children.Add(emptyText);
                 stackPanel.Children.Add(listBox);
 
-                item.Content = stackPanel;
+                item.Content = stackPanel;*/
+                
+                //item.HorizontalContentAlignment = HorizontalAlignment.Stretch;
+                //item.VerticalContentAlignment = VerticalAlignment.Stretch;
                 mainPivot.Items.Add(item);
             }
 
@@ -93,7 +102,8 @@ namespace ClassSchedule {
 
             var classes = Classes.GetClassesForWeek(week);
 
-            for (var i = 0; i < listBoxes.Length; i++) {
+            for (var i = 0; i < mainPivot.Items.Count; i++) {
+                var pivotItem = mainPivot.Items[i] as PivotItem;
                 var listBox = listBoxes[i];
                 var emptyText = emptyTexts[i];
                 listBox.Items.Clear();
@@ -104,13 +114,19 @@ namespace ClassSchedule {
                 var remain = cls.Count;
 
                 if (remain == 0) {
-                    listBox.Visibility = Visibility.Collapsed;
-                    emptyText.Visibility = Visibility.Visible;
+                    pivotItem.VerticalContentAlignment = VerticalAlignment.Center;
+                    pivotItem.HorizontalContentAlignment = HorizontalAlignment.Center;
+                    pivotItem.Content = emptyText;
+                    //listBox.Visibility = Visibility.Collapsed;
+                    //emptyText.Visibility = Visibility.Visible;
                     continue;
                 }
                 else {
-                    listBox.Visibility = Visibility.Visible;
-                    emptyText.Visibility = Visibility.Collapsed;
+                    pivotItem.VerticalContentAlignment = VerticalAlignment.Stretch;
+                    pivotItem.HorizontalContentAlignment = HorizontalAlignment.Stretch;
+                    pivotItem.Content = listBox;
+                    //listBox.Visibility = Visibility.Visible;
+                    //emptyText.Visibility = Visibility.Collapsed;
                 }
 
                 for (var j = 1; remain > 0; j++)
@@ -217,6 +233,11 @@ namespace ClassSchedule {
         }
 
         private void SwitchToToday(bool reload = false) {
+            var week = Time.ThisWeek;
+            if (week > Config.WeekCount)
+                week = Config.WeekCount;
+            else if (week < 1) week = 1;
+
             if (reload || WeekDisplaying != Time.ThisWeek)
                 LoadClassScheduleForWeek(WeekDisplaying = Time.ThisWeek);
 

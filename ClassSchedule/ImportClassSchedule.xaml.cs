@@ -53,7 +53,7 @@ namespace ClassSchedule
             var GetTable = new Action(() => {
                 var request = new HttpRequest("POST", "http://202.202.1.41/znpk/Pri_StuSel_rpt.aspx");
                 request.ContentType = "application/x-www-form-urlencoded";
-                request.Send("Sel_XNXQ=20111&rad=on&px=0&Submit01=%BC%EC%CB%F7");
+                request.Send("Sel_XNXQ=20111&rad=on&px=0");
                 request.Complete += (success, text) => {
                     Dispatcher.BeginInvoke(() => {
                         if (!success) {
@@ -71,7 +71,7 @@ namespace ClassSchedule
             var Login = new Action(() => {
                 var request = new HttpRequest("POST", "http://202.202.1.41/_data/index_login.aspx");
                 request.ContentType = "application/x-www-form-urlencoded";
-                request.Send("Sel_Type=STU&UserID=" + HttpUtility.UrlEncode(studentNumber) + "&PassWord=" + HttpUtility.UrlEncode(password) + "&cCode=&pcInfo=Mozilla%2F5.0+%28compatible%3B+MSIE+9.0%3B+Windows+NT+6.1%3B+Trident%2F5.0%3B+SLCC2%3B+.NET+CLR+2.0.50727%3B+.NET+CLR+3.5.30729%3B+.NET+CLR+3.0.30729%3B+Media+Center+PC+6.0%3B+InfoPath.3%3B+.NET4.0C%3B+.NET4.0E%3B+Zune+4.7%3B+Tablet+PC+2.0%29x860+SN%3ANULL&typeName=%D1%A7%C9%FA");
+                request.Send("Sel_Type=STU&UserID=" + HttpUtility.UrlEncode(studentNumber) + "&PassWord=" + HttpUtility.UrlEncode(password));
                 request.Complete += (success, text) => {
                     Dispatcher.BeginInvoke(() => {
                         if (!success) {
