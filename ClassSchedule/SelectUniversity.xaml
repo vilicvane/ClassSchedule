@@ -28,7 +28,7 @@
 
 		<!--ContentPanel - place additional content here-->
 		<Grid x:Name="ContentPanel" Grid.Row="1" Margin="12,0,12,0">
-			<ListBox x:Name="universityList" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="{StaticResource PhoneMargin}" SelectionChanged="universityList_SelectionChanged" />
+			<ListBox x:Name="universityList" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="{StaticResource PhoneMargin}" SelectionChanged="universityList_SelectionChanged" />
 		</Grid>
 		<ProgressBar x:Name="universityLoadingProgressBar" Height="10" VerticalAlignment="Top" IsIndeterminate="True" Margin="0,280,0,0" Grid.Row="1" />
 	</Grid>
