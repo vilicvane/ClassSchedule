@@ -12,7 +12,6 @@ using System.Windows.Shapes;
 using Microsoft.Phone.Controls;
 using System.Text;
 using System.IO;
-using GBKEncoding;
 using System.Text.RegularExpressions;
 using System.IO.IsolatedStorage;
 using Microsoft.Phone.Shell;
@@ -37,8 +36,7 @@ namespace ClassSchedule {
 
             for (var i = 0; i < days.Length; i++ ) {
                 var day = days[i];
-                var item = new PivotItem() {
-                };
+                var item = new PivotItem();
 
                 item.Header = day;
 
@@ -54,53 +52,61 @@ namespace ClassSchedule {
 
                 listBoxes[i] = listBox;
                 emptyTexts[i] = emptyText;
-                /*
-                var stackPanel = new StackPanel() {
 
-                };
-                stackPanel.Children.Add(emptyText);
-                stackPanel.Children.Add(listBox);
-
-                item.Content = stackPanel;*/
-                
-                //item.HorizontalContentAlignment = HorizontalAlignment.Stretch;
-                //item.VerticalContentAlignment = VerticalAlignment.Stretch;
                 mainPivot.Items.Add(item);
             }
 
-            mainPivot.SelectedIndex = GetDayOfWeek();
+            //mainPivot.SelectedIndex = GetDayOfWeek();
+            SwitchToToday();
         }
 
-        // Load data for the ViewModel Items
+        private bool loaded = false;
+
         private void MainPage_Loaded(object sender, RoutedEventArgs e) {
+            new Navigation(NavigationService).ClearHistory();
 
-            if (Config.Terminated) {
-                Config.Terminated = false;
-                return;
+            if (!loaded) {
+                loaded = true;
+                if (Schedule.ClassInfos == null || Schedule.UniversityInfo == null) {
+                    if (Schedule.UniversityInfo != null)
+                        NavigationService.Source = Uris.ImportClassSchedule;
+                    else
+                        NavigationService.Source = Uris.SelectUniversity;
+                    return;
+                }
             }
 
-            if (!Config.Load()) {
-                NavigationService.Navigate(new Uri("/SelectUniversity.xaml", UriKind.Relative));
-                return;
+            SwitchToToday();
+        }
+
+        private bool mainPivotItemChanging = false;
+
+        void mainPivot_SelectionChanged(object sender, SelectionChangedEventArgs e) {
+            if (mainPivotItemChanging) return;
+
+            mainPivotItemChanging = true;
+            var added = e.AddedItems[0];
+            var removed = e.RemovedItems[0];
+            var sunItem = mainPivot.Items[0];
+            var monItem = mainPivot.Items[1];
+            if (added == monItem && removed == sunItem) {
+                if (!GoNextWeek()) {
+                    mainPivot.SelectedItem = removed;
+                }
             }
-
-            Classes.Load();
-
-            SwitchToToday(true);
-
-            if (Classes.Count == 0) {
-                var result = MessageBox.Show("no class has been added, do you want to import?", "IMPORT", MessageBoxButton.OKCancel);
-                if (result == MessageBoxResult.OK)
-                    NavigationService.Navigate(new Uri("/ImportClassSchedule.xaml", UriKind.Relative));
-                return;
+            else if (added == sunItem && removed == monItem) {
+                if (!GoLastWeek()) {
+                    mainPivot.SelectedItem = removed;
+                }
             }
+            mainPivotItemChanging = false;
         }
 
         private void LoadClassScheduleForWeek(int week) {
 
             mainPivot.Title = "CLASS SCHEDULE (the " + AddOrdinal(week) + " week)";
 
-            var classes = Classes.GetClassesForWeek(week);
+            var classes = Schedule.GetClassesForWeek(week);
 
             for (var i = 0; i < mainPivot.Items.Count; i++) {
                 var pivotItem = mainPivot.Items[i] as PivotItem;
@@ -109,7 +115,7 @@ namespace ClassSchedule {
                 listBox.Items.Clear();
 
                 var cls = classes[i];
-                var infos = new List<SpecificClassInfo>();
+                var infos = new List<ClassPeriodInfo>();
 
                 var remain = cls.Count;
 
@@ -129,45 +135,44 @@ namespace ClassSchedule {
                     //emptyText.Visibility = Visibility.Collapsed;
                 }
 
+                ClassPeriodInfo lastInfo = null;
+
                 for (var j = 1; remain > 0; j++)
                     if (cls.ContainsKey(j)) {
                         var cl = cls[j];
-                        if (infos.Count == 0 || infos.Last().Name != cl.Name) {
-                            infos.Add(new SpecificClassInfo() {
+                        var session = Schedule.GetSession(j);
+
+                        remain--;
+                        if (session == null) continue;
+
+                        if (lastInfo == null || lastInfo.Name != cl.Name) {
+                            lastInfo = new ClassPeriodInfo() {
                                 Name = cl.Name,
-                                StartsAt = Config.SessionStartTimes[j],
-                                EndsAt = Config.SessionEndTimes[j],
+                                PeriodName = Schedule.GetSessionPeriodName(j),
+                                StartTime = session.StartTime,
+                                EndTime = session.EndTime,
                                 Teacher = cl.Teacher,
                                 Location = cl.Location
-                            });
+                            };
+
+                            infos.Add(lastInfo);
                         }
-                        else if (Config.SessionEndTimes.ContainsKey(j))
-                            infos.Last().EndsAt = Config.SessionEndTimes[j];
-                        remain--;
+                        else
+                            lastInfo.EndTime = session.EndTime;
                     }
 
-                var pChr = '-';
-                var pNames = new Dictionary<char, string>() {
-                    {'m', "morning"},
-                    {'a', "afternoon"},
-                    {'e', "evening"}
-                };
+                var pName = "";
 
                 foreach (var info in infos) {
-                    var startsAt = info.StartsAt;
-                    if (pChr != startsAt[0]) {
-                        pChr = startsAt[0];
+                    if (pName != info.PeriodName) {
+                        pName = info.PeriodName;
                         listBox.Items.Add(new ListBoxItem() {
                             Content = new TextBlock() {
-                                Text = pNames[pChr],
+                                Text = info.PeriodName.ToLower(),
                                 Margin = new Thickness() { Left = 12 }
                             }
                         });
                     }
-
-                    
-
-                    startsAt = startsAt.Substring(1);
 
                     var stackPanel = new StackPanel() {
                         Margin = new Thickness() { Bottom = 17 }
@@ -184,7 +189,7 @@ namespace ClassSchedule {
                     });
 
                     stackPanel.Children.Add(new TextBlock() {
-                        Text = (info.Location.Length > 0 ? info.Location + " " : "") + startsAt + "-" + info.EndsAt,
+                        Text = (info.Location.Length > 0 ? info.Location + " " : "") + info.StartTime + "-" + info.EndTime,
                         Style = Resources["PhoneTextSubtleStyle"] as Style
                     });
 
@@ -198,34 +203,37 @@ namespace ClassSchedule {
 
         }
 
-        private void importMenuItem_Click(object sender, System.EventArgs e) {
-            NavigationService.Navigate(new Uri("/ImportClassSchedule.xaml", UriKind.Relative));
+        private bool GoLastWeek() {
+            if (WeekDisplaying == 1) return false;
+            LoadClassScheduleForWeek(--WeekDisplaying);
+            return true;
         }
 
-        private void changeUniversityMenuItem_Click(object sender, System.EventArgs e) {
-            NavigationService.Navigate(new Uri("/SelectUniversity.xaml", UriKind.Relative));
+        private bool GoNextWeek() {
+            if (Schedule.UniversityInfo == null || WeekDisplaying == Schedule.UniversityInfo.WeekCount) return false;
+            LoadClassScheduleForWeek(++WeekDisplaying);
+            return true;
+        }
+
+        private void importMenuItem_Click(object sender, System.EventArgs e) {
+            if (Schedule.UniversityInfo != null)
+                NavigationService.Source = Uris.ImportClassSchedule;
+            else
+                NavigationService.Source = Uris.SelectUniversity;
         }
 
         private void aboutMenuItem_Click(object sender, System.EventArgs e) {
-            MessageBox.Show("Class Schedule for CQU\nBy VILIC VANE\nwww.vilic.info", "ABOUT", MessageBoxButton.OK);
+            MessageBox.Show("Class Schedule\nBy VILIC VANE\nwww.vilic.info", "ABOUT", MessageBoxButton.OK);
         }
 
         private void lastWeekButton_Click(object sender, System.EventArgs e) {
-            if (WeekDisplaying == 1) {
+            if (!GoLastWeek())
                 MessageBox.Show("already the first week", "NOTICE", MessageBoxButton.OK);
-                return;
-            }
-
-            LoadClassScheduleForWeek(--WeekDisplaying);
         }
 
         private void nextWeekButton_Click(object sender, System.EventArgs e) {
-            if (WeekDisplaying == Config.WeekCount) {
+            if (!GoNextWeek())
                 MessageBox.Show("already the last week", "NOTICE", MessageBoxButton.OK);
-                return;
-            }
-
-            LoadClassScheduleForWeek(++WeekDisplaying);
         }
 
         private void todayButton_Click(object sender, System.EventArgs e) {
@@ -234,14 +242,23 @@ namespace ClassSchedule {
 
         private void SwitchToToday(bool reload = false) {
             var week = Time.ThisWeek;
-            if (week > Config.WeekCount)
-                week = Config.WeekCount;
-            else if (week < 1) week = 1;
+            var dayOfWeek = GetDayOfWeek();
+            var universityInfo = Schedule.UniversityInfo;
+            if (universityInfo != null) {
+                if (week > universityInfo.WeekCount) {
+                    week = universityInfo.WeekCount;
+                    dayOfWeek = 0;
+                }
+                else if (week < 1) {
+                    week = 1;
+                    dayOfWeek = 1;
+                }
+            }
 
             if (reload || WeekDisplaying != Time.ThisWeek)
                 LoadClassScheduleForWeek(WeekDisplaying = Time.ThisWeek);
 
-            mainPivot.SelectedIndex = GetDayOfWeek();
+            mainPivot.SelectedIndex = dayOfWeek;
         }
 
         private int GetDayOfWeek() {

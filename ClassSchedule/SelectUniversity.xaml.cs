@@ -15,50 +15,77 @@ namespace ClassSchedule
 {
     public partial class SelectUniversity : PhoneApplicationPage
     {
+        private bool loaded = false;
+
         public SelectUniversity()
         {
             InitializeComponent();
+            this.Loaded += new RoutedEventHandler(SelectUniversity_Loaded);
+        }
 
-            Config.FetchCallback fetchCallback = delegate { };
+        void SelectUniversity_Loaded(object sender, RoutedEventArgs e) {
+            //Navigation.ClearHistory(NavigationService);
 
-            fetchCallback = (universities) => {
+            if (loaded)
+                return;
 
-                if (universities.Length == 0) {
-                    if (Config.Loaded) {
-                        MessageBox.Show("failed to fetch university list", "ERROR", MessageBoxButton.OK);
-                        NavigationService.GoBack();
-                    }
-                    else {
-                        var result = MessageBox.Show("failed to fetch university list, do you want to retry?", "ERROR", MessageBoxButton.OKCancel);
-                        if (result == MessageBoxResult.OK)
-                            Config.Fetch(fetchCallback);
-                        else {
-                            Config.Terminated = true;
+            loaded = true;
+
+            ProxyCallback fetchCallback = delegate { };
+
+            fetchCallback = (listObject, ex) => {
+                Dispatcher.BeginInvoke(() => {
+                    if (ex != null) {
+                        if (Schedule.UniversityInfo != null) {
+                            MessageBox.Show("failed to fetch university list", "ERROR", MessageBoxButton.OK);
                             NavigationService.GoBack();
                         }
-                    }
-                    return;
-                }
-
-                foreach (var u in universities)
-                    universityList.Items.Add(new ListBoxItem() {
-                        Content = new TextBlock() {
-                            Text = u,
-                            Style = App.Current.Resources["SelectListFont"] as Style
+                        else {
+                            var result = MessageBox.Show("failed to fetch university list, do you want to retry?", "ERROR", MessageBoxButton.OKCancel);
+                            if (result == MessageBoxResult.OK)
+                                Proxy.ListUniversitis(fetchCallback);
+                            else
+                                NavigationService.Source = Uris.MainPage;
                         }
-                    });
+                        return;
+                    }
 
-                universityLoadingProgressBar.Visibility = Visibility.Collapsed;
+                    foreach (var info in listObject as UniversityListInfo[])
+                        universityList.Items.Add(new ListBoxItem() {
+                            Content = new TextBlock() {
+                                Text = info.Name,
+                                Style = App.Current.Resources["SelectListFont"] as Style
+                            },
+                            Tag = info.Id
+                        });
 
+                    universityLoadingProgressBar.Visibility = Visibility.Collapsed;
+                });
             };
 
-            Config.Fetch(fetchCallback);
+            Proxy.ListUniversitis(fetchCallback);
         }
 
         private void universityList_SelectionChanged(object sender, SelectionChangedEventArgs e) {
-            var university = ((e.AddedItems[0] as ListBoxItem).Content as TextBlock).Text;
-            Config.SetUniversity(university);
-            NavigationService.GoBack();
+            if (e.AddedItems.Count == 0) return;
+            universityLoadingProgressBar.Visibility = Visibility.Visible;
+            universityList.IsEnabled = false;
+            var id = (int)(e.AddedItems[0] as ListBoxItem).Tag;
+            Proxy.GetUniversityInfo(id, (value, ex) => {
+                Dispatcher.BeginInvoke(() => {
+                    universityLoadingProgressBar.Visibility = Visibility.Collapsed;
+                    universityList.IsEnabled = true;
+                    universityList.SelectedItem = null;
+                    if (ex == null) {
+                        Schedule.UniversityInfo = value as UniversityInfo;
+                        Schedule.ClassInfos = null;
+                        new Navigation(NavigationService).BackToOrGoTo(Uris.ImportClassSchedule);
+                    }
+                    else MessageBox.Show("failed to fetch the information of the university selected, please try again.", "ERROR", MessageBoxButton.OK);
+                });
+            });
+
+            //NavigationService.GoBack();
         }
     }
 }

@@ -50,9 +50,12 @@
     <WarningLevel>0</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Microsoft.Expression.Drawing" />
     <Reference Include="Microsoft.Phone" />
     <Reference Include="Microsoft.Phone.Controls" />
     <Reference Include="Microsoft.Phone.Interop" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Servicemodel.Web" />
     <Reference Include="System.Windows" />
     <Reference Include="system" />
     <Reference Include="System.Core" />
@@ -64,8 +67,6 @@
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Config.cs" />
-    <Compile Include="GBKEncoder.cs" />
     <Compile Include="HttpRequest.cs" />
     <Compile Include="ImportClassSchedule.xaml.cs">
       <DependentUpon>ImportClassSchedule.xaml</DependentUpon>
@@ -75,9 +76,12 @@
     </Compile>
     <Compile Include="Others.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Proxy.cs" />
+    <Compile Include="Schedule.cs" />
     <Compile Include="SelectUniversity.xaml.cs">
       <DependentUpon>SelectUniversity.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Uris.cs" />
   </ItemGroup>
   <ItemGroup>
     <ApplicationDefinition Include="App.xaml">

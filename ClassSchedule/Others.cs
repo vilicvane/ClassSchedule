@@ -11,112 +11,122 @@ using System.Windows.Shapes;
 using System.Collections.Generic;
 using System.IO.IsolatedStorage;
 using System.IO;
+using System.Runtime.Serialization.Json;
+using System.Text;
+using System.Runtime.Serialization;
+using System.Windows.Navigation;
+using System.Linq;
 
 namespace ClassSchedule {
 
-    public static class Time {
-        public static int ThisWeek {
-            get {
-                return (int)((DateTime.Today - Config.FirstWeek).TotalDays / 7) + 1;
-            }
-        }
+    public class Session {
+        public string StartTime;
+        public string EndTime;
+    }
+
+    public class SessionPeriod {
+        public string Name;
+        public Session[] Sessions;
+    }
+
+    public class UniversityInfo {
+        public int Id;
+        public string Name;
+        public bool HasVerifier;
+        public DateTime FirstWeek;
+        public int WeekCount;
+        public SessionPeriod[] SessionPeriods;
+    }
+
+    public class UniversityListInfo {
+        public int Id;
+        public string Name;
     }
 
     public class ClassInfo {
-        public string Name { get; private set; }
-        public string Teacher { get; private set; }
-        public int[] Weeks { get; private set; }
-        public int Day { get; private set; }
-        public int[] Sessions { get; private set; }
-        public string Location { get; private set; }
+        public string Name;
+        public SubClassInfo[] Classes;
+    }
 
-        public ClassInfo(string infoLine) {
-            var infos = infoLine.Split(';');
-            Name = infos[0];
-            Teacher = infos[1];
-            Weeks = GetNumbers(infos[2]);
-            Day = int.Parse(infos[3]);
-            Sessions = GetNumbers(infos[4]);
-            Location = infos[5];
-        }
-
-        public bool HasClassOn(int day, int week = 0) {
-            if (week == 0)
-                week = Time.ThisWeek;
-
-            return Day == day && Array.IndexOf(Weeks, week) >= 0;
-        }
-
-        public bool HasClassIn(int week) {
-            return Array.IndexOf(Weeks, week) >= 0;
-        }
-
-        private static int[] GetNumbers(string str) {
-            var nums = new List<int>();
-            var ns = str.Split(',');
-            foreach (var n in ns)
-                nums.Add(int.Parse(n));
-
-            return nums.ToArray();
-        }
+    public class SubClassInfo {
+        public string Teacher;
+        public int[] Weeks;
+        public int DayOfWeek;
+        public int[] Sessions;
+        public string Location;
     }
 
     public class SpecificClassInfo {
         public string Name;
-        public string StartsAt;
-        public string EndsAt;
         public string Teacher;
         public string Location;
     }
 
-    public static class Classes {
-        static string dataPath = "data";
-        static IsolatedStorageFile isf = IsolatedStorageFile.GetUserStoreForApplication();
+    public class ClassPeriodInfo {
+        public string Name;
+        public string Teacher;
+        public string Location;
+        public string PeriodName;
+        public string StartTime;
+        public string EndTime;
+    }
 
-        private static List<ClassInfo> classes = new List<ClassInfo>();
-        public static int Count { get { return classes.Count; } }
+    public static class Json {
+        public static string Stringify(object @object) {
+            if (@object == null)
+                return "null";
+            var serializer = new DataContractJsonSerializer(@object.GetType());
+            var stream = new MemoryStream();
+            serializer.WriteObject(stream, @object);
+            stream.Position = 0;
+            return new StreamReader(stream).ReadToEnd();
+        }
 
-        public static void Load() {
-            string text;
+        public static T Parse<T>(string json) {
+            var serializer = new DataContractJsonSerializer(typeof(T));
+            var stream = new MemoryStream(Encoding.UTF8.GetBytes(json));
+            stream.Position = 0;
+            var @object = serializer.ReadObject(stream);
+            return (T)@object;
+        }
+    }
 
-            if (!isf.FileExists(dataPath)) {
-                isf.CreateFile(dataPath).Close();
-                text = "";
+    public static class Time {
+        public static int ThisWeek {
+            get {
+                if (Schedule.UniversityInfo == null)
+                    return 1;
+                return (int)((DateTime.Today - Schedule.UniversityInfo.FirstWeek).TotalDays / 7) + 1;
             }
-            else {
-                var stream = isf.OpenFile(dataPath, FileMode.Open);
-                text = new StreamReader(stream).ReadToEnd();
-                stream.Close();
+        }
+    }
+
+    public class Navigation {
+        private NavigationService Service { get; set; }
+
+        public Navigation(NavigationService service) {
+            Service = service;
+        }
+
+        public void ClearHistory() {
+            while (Service.CanGoBack)
+                Service.RemoveBackEntry();
+        }
+
+        public void BackToOrGoTo(Uri uri) {
+            var stack = Service.BackStack;
+            var count = 0;
+            foreach (var entry in stack) {
+                if (entry.Source == uri) break;
+                count++;
             }
 
-            var lines = text.Length > 0 ? text.Split('\n') : new string[0];
-
-            foreach (var line in lines)
-                classes.Add(new ClassInfo(line));
+            if (count < stack.Count()) {
+                while (count-- > 0)
+                    Service.RemoveBackEntry();
+                Service.GoBack();
+            }
+            else Service.Source = uri;
         }
-
-        public static void Update(string data) {
-            var stream = isf.OpenFile(dataPath, FileMode.Create);
-            var writer = new StreamWriter(stream);
-            writer.Write(data);
-            writer.Flush();
-            writer.Close();
-            classes.Clear();
-        }
-
-        public static Dictionary<int, ClassInfo>[] GetClassesForWeek(int week) {
-            var infos = new Dictionary<int, ClassInfo>[7];
-            for (var i = 0; i < 7; i++)
-                infos[i] = new Dictionary<int, ClassInfo>();
-
-            foreach (var cl in classes)
-                if (cl.HasClassIn(week))
-                    foreach (var session in cl.Sessions)
-                        infos[cl.Day][session] = cl;
-
-            return infos;
-        }
-
-
     }
 }

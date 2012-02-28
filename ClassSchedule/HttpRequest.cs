@@ -9,71 +9,76 @@ using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Shapes;
 using System.Collections.Generic;
-using GBKEncoding;
+using System.IO;
+using System.Text;
 
 namespace ClassSchedule {
-    class HttpRequest {
-        HttpWebRequest request;
-        static Dictionary<string, CookieContainer> cookieContainers = new Dictionary<string, CookieContainer>();
+    public class HttpRequest {
+        private HttpWebRequest request;
+        private HttpWebResponse response;
+        private static CookieContainer cookieContainer = new CookieContainer();
 
-        public HttpRequest(string method, string url) {
+        public WebHeaderCollection RequestHeaders { get { return request.Headers; } }
+        public WebHeaderCollection ResponseHeaders { get { return response.Headers; } }
+        public string ContentType { get { return request.ContentType; } set { request.ContentType = value; } }
+
+        public HttpStatusCode StatusCode { get { return response.StatusCode; } }
+
+        private string responseText;
+        public string ResponseText {
+            get {
+                if (responseText == null)
+                    responseText = new StreamReader(ResponseStream).ReadToEnd();
+                return responseText;
+            }
+        }
+        public Stream ResponseStream { get { return response.GetResponseStream(); } }
+
+        public event Action Complete = delegate { };
+
+        public void Open(string method, string url) {
             request = WebRequest.Create(url) as HttpWebRequest;
-
-            var domain = new Uri(url).Host.ToLower();
-            if (!cookieContainers.ContainsKey(domain))
-                cookieContainers[domain] = new CookieContainer();
-
-            request.CookieContainer = cookieContainers[domain];
             request.Method = method;
+            request.CookieContainer = cookieContainer;
+
+            response = null;
         }
 
-        public void Send(string content = null) {
+        public void Send(string data) {
+            var bytes = new byte[data.Length];
+            for (var i = 0; i < bytes.Length; i++)
+                bytes[i] = BitConverter.GetBytes(data[i])[0];
+            Send(bytes);
+        }
 
+        public void Send() {
+            Send(new byte[0]);
+        }
+
+        public void Send(byte[] bytes) {
             var GetResponse = new Action(() => {
-                try {
-                    request.BeginGetResponse((result) => {
-                        if (result.IsCompleted) {
-                            try {
-                                var response = request.EndGetResponse(result);
-                                var stream = response.GetResponseStream();
-                                var text = GBKEncoder.Read(stream);
-                                Complete(true, text);
-                            }
-                            catch {
-                                Complete(false, null);
-                                return;
-                            }
+                request.BeginGetResponse((result) => {
+                    if (result.IsCompleted) {
+                        try {
+                            response = request.EndGetResponse(result) as HttpWebResponse;
                         }
-                    }, null);
-                }
-                catch {
-                    Complete(false, null);
-                }
+                        catch (WebException e) {
+                            response = e.Response as HttpWebResponse;
+                        }
+                        Complete();
+                    }
+                }, null);
             });
 
-            if (content != null) {
+            if (bytes.Length > 0) {
                 request.BeginGetRequestStream((result) => {
                     using (var stream = request.EndGetRequestStream(result)) {
-                        var bytes = new List<byte>();
-                        foreach (var chr in content)
-                            bytes.Add(BitConverter.GetBytes(chr)[0]);
-                        stream.Write(bytes.ToArray(), 0, bytes.Count);
-                        request.Headers["Content-Length"] = bytes.Count.ToString();
+                        stream.Write(bytes, 0, bytes.Length);
                     }
                     GetResponse();
                 }, null);
             }
             else GetResponse();
         }
-
-        public string ContentType {
-            get { return request.ContentType; }
-            set { request.ContentType = value; }
-        }
-
-        public WebHeaderCollection Headers { get { return request.Headers; } }
-
-        public delegate void Callback(bool success, string text);
-        public event Callback Complete = delegate { };
     }
 }

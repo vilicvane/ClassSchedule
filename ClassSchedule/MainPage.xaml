@@ -17,7 +17,7 @@
     <!--LayoutRoot is the root grid where all page content is placed-->
     <Grid x:Name="LayoutRoot" Background="Transparent">
         <!--Pivot Control-->
-        <controls:Pivot Title="CLASS SCHEDULE" Name="mainPivot"></controls:Pivot>
+        <controls:Pivot Title="CLASS SCHEDULE" Name="mainPivot" SelectionChanged="mainPivot_SelectionChanged"></controls:Pivot>
     </Grid>
 
     <phone:PhoneApplicationPage.ApplicationBar>
@@ -25,7 +25,6 @@
             <shell:ApplicationBar.MenuItems>
                 <shell:ApplicationBarMenuItem x:Name="importMenuItem" Text="import" Click="importMenuItem_Click"/>
             	<!--<shell:ApplicationBarMenuItem x:Name="editMenuItem" Text="edit"/>-->
-            	<shell:ApplicationBarMenuItem x:Name="changeUniversityMenuItem" Text="change university" Click="changeUniversityMenuItem_Click"/>
                 <shell:ApplicationBarMenuItem x:Name="aboutMenuItem" Text="about" Click="aboutMenuItem_Click"/>
             </shell:ApplicationBar.MenuItems>
             <shell:ApplicationBarIconButton x:Name="lastWeekButton" IconUri="/icons/appbar.back.rest.png" Text="last week" Click="lastWeekButton_Click"/>
