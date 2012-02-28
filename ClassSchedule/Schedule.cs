@@ -56,17 +56,15 @@ namespace ClassSchedule {
             }
         }
 
-        public static Dictionary<int, SpecificClassInfo>[] GetClassesForWeek(int week) {
-            var infos = new Dictionary<int, SpecificClassInfo>[7];
-            for (var i = 0; i < 7; i++)
-                infos[i] = new Dictionary<int, SpecificClassInfo>();
+        public static Dictionary<int, SpecificClassInfo> GetClasses(int dayOfWeek, int week) {
+            var infos = new Dictionary<int, SpecificClassInfo>();
 
             if (Schedule.ClassInfos != null)
                 foreach (var classInfo in Schedule.ClassInfos)
                     foreach (var subClassInfo in classInfo.Classes)
-                        if (subClassInfo.Weeks.Contains(week))
+                        if (subClassInfo.DayOfWeek == dayOfWeek && subClassInfo.Weeks.Contains(week))
                             foreach (var session in subClassInfo.Sessions)
-                                infos[subClassInfo.DayOfWeek][session] = new SpecificClassInfo() {
+                                infos[session] = new SpecificClassInfo() {
                                     Name = classInfo.Name,
                                     Teacher = subClassInfo.Teacher,
                                     Location = subClassInfo.Location

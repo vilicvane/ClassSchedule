@@ -36,12 +36,17 @@ namespace ClassSchedule
 
             universityNameTextBlock.Text = info.Name;
 
+            verifierImage.Source = null;
+
             if (info.HasVerifier) {
                 verifierTextBox.IsEnabled = true;
+                importButton.IsEnabled = false;
                 FetchVerifier();
             }
-            else
+            else {
+                verifierTextBox.IsEnabled = false;
                 importButton.IsEnabled = true;
+            }
         }
 
         private bool fetchingVerifier = false;
@@ -55,15 +60,19 @@ namespace ClassSchedule
 
             Proxy.FetchVerifier(Schedule.UniversityInfo.Id, (value, ex) => {
                 Dispatcher.BeginInvoke(() => {
+                    fetchingVerifier = false;
+
                     if (ex == null) {
                         var image = new BitmapImage();
                         image.SetSource(value as Stream);
                         verifierImage.Source = image as BitmapImage;
                         importButton.IsEnabled = true;
                         importProgressBar.Visibility = Visibility.Collapsed;
-                        fetchingVerifier = false;
+                        return;
                     }
 
+                    MessageBox.Show("failed to fetch verifier", "ERROR", MessageBoxButton.OK);
+                    NavigationService.GoBack();
                     //InputScopeNameValue.
                 });
             });

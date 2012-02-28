@@ -34,9 +34,9 @@
 			<TextBlock HorizontalAlignment="Left" Margin="12,182,0,0" TextWrapping="Wrap" Text="Password" VerticalAlignment="Top"/>
 			<PasswordBox x:Name="passwordTextBox" Margin="0,209,0,0" d:LayoutOverrides="Width" VerticalAlignment="Top" KeyUp="passwordTextBox_KeyUp" />
 			<TextBlock HorizontalAlignment="Left" Margin="12,287,0,293" TextWrapping="Wrap" Text="Verifer" d:LayoutOverrides="Height"/>
-			<TextBox x:Name="verifierTextBox" IsEnabled="False" Margin="0,0,0,221" KeyUp="verifierTextBox_KeyUp" VerticalAlignment="Bottom" HorizontalAlignment="Left" Width="160" />
+			<TextBox x:Name="verifierTextBox" Margin="0,0,0,221" KeyUp="verifierTextBox_KeyUp" VerticalAlignment="Bottom" HorizontalAlignment="Left" Width="160" />
             <Image x:Name="verifierImage" Margin="164,326,0,0" Height="48" VerticalAlignment="Top" HorizontalAlignment="Left" MouseLeftButtonUp="verifierImage_MouseLeftButtonDown"/>
-            <Button x:Name="importButton" IsEnabled="false" Content="signin and import" HorizontalAlignment="Left" Margin="0,0,0,148" Click="importButton_Click" VerticalAlignment="Bottom"/>
+            <Button x:Name="importButton" Content="signin and import" HorizontalAlignment="Left" Margin="0,0,0,148" Click="importButton_Click" VerticalAlignment="Bottom"/>
         </Grid>
 		<ProgressBar x:Name="importProgressBar" HorizontalAlignment="Center" Height="10" VerticalAlignment="Top" Width="480" Visibility="Collapsed" IsIndeterminate="True"/>
 	</Grid>

@@ -22,7 +22,16 @@ namespace ClassSchedule {
 
         private ListBox[] listBoxes;
         private TextBlock[] emptyTexts;
-        private int WeekDisplaying = 0;
+        private int weekDisplaying = 0;
+        private int WeekDisplaying {
+            get {
+                return weekDisplaying;
+            }
+            set {
+                weekDisplaying = value;
+                mainPivot.Title = "CLASS SCHEDULE (the " + AddOrdinal(weekDisplaying) + " week)";
+            }
+        }
 
         // Constructor
         public MainPage() {
@@ -36,7 +45,9 @@ namespace ClassSchedule {
 
             for (var i = 0; i < days.Length; i++ ) {
                 var day = days[i];
-                var item = new PivotItem();
+                var item = new PivotItem() {
+                    Tag = i
+                };
 
                 item.Header = day;
 
@@ -75,8 +86,7 @@ namespace ClassSchedule {
                     return;
                 }
             }
-
-            SwitchToToday();
+            else SwitchToToday();
         }
 
         private bool mainPivotItemChanging = false;
@@ -100,118 +110,125 @@ namespace ClassSchedule {
                 }
             }
             mainPivotItemChanging = false;
+            //LoadClassList(mainPivot.SelectedItem as PivotItem, WeekDisplaying);
         }
 
-        private void LoadClassScheduleForWeek(int week) {
+        private void mainPivot_LoadedPivotItem(object sender, PivotItemEventArgs e) {
+            var dayOfWeek = (int)e.Item.Tag;
+            Dispatcher.BeginInvoke(() => {
+                LoadClassList(mainPivot.Items[(dayOfWeek + 6) % 7] as PivotItem, WeekDisplaying - (dayOfWeek == 1 ? 1 : 0));
+                LoadClassList(mainPivot.Items[(dayOfWeek + 1) % 7] as PivotItem, WeekDisplaying + (dayOfWeek == 0 ? 1 : 0));
+            });
+        }
 
-            mainPivot.Title = "CLASS SCHEDULE (the " + AddOrdinal(week) + " week)";
+        private void LoadClassList(PivotItem pivotItem, int week) {
+            var dayOfWeek = (int)pivotItem.Tag;
 
-            var classes = Schedule.GetClassesForWeek(week);
+            var classes = Schedule.GetClasses(dayOfWeek, week);
 
-            for (var i = 0; i < mainPivot.Items.Count; i++) {
-                var pivotItem = mainPivot.Items[i] as PivotItem;
-                var listBox = listBoxes[i];
-                var emptyText = emptyTexts[i];
-                listBox.Items.Clear();
+            var listBox = listBoxes[dayOfWeek];
+            var emptyText = emptyTexts[dayOfWeek];
+            listBox.Items.Clear();
 
-                var cls = classes[i];
-                var infos = new List<ClassPeriodInfo>();
+            var infos = new List<ClassPeriodInfo>();
 
-                var remain = cls.Count;
+            var remain = classes.Count;
 
-                if (remain == 0) {
-                    pivotItem.VerticalContentAlignment = VerticalAlignment.Center;
-                    pivotItem.HorizontalContentAlignment = HorizontalAlignment.Center;
-                    pivotItem.Content = emptyText;
-                    //listBox.Visibility = Visibility.Collapsed;
-                    //emptyText.Visibility = Visibility.Visible;
-                    continue;
-                }
-                else {
-                    pivotItem.VerticalContentAlignment = VerticalAlignment.Stretch;
-                    pivotItem.HorizontalContentAlignment = HorizontalAlignment.Stretch;
-                    pivotItem.Content = listBox;
-                    //listBox.Visibility = Visibility.Visible;
-                    //emptyText.Visibility = Visibility.Collapsed;
-                }
-
-                ClassPeriodInfo lastInfo = null;
-
-                for (var j = 1; remain > 0; j++)
-                    if (cls.ContainsKey(j)) {
-                        var cl = cls[j];
-                        var session = Schedule.GetSession(j);
-
-                        remain--;
-                        if (session == null) continue;
-
-                        if (lastInfo == null || lastInfo.Name != cl.Name) {
-                            lastInfo = new ClassPeriodInfo() {
-                                Name = cl.Name,
-                                PeriodName = Schedule.GetSessionPeriodName(j),
-                                StartTime = session.StartTime,
-                                EndTime = session.EndTime,
-                                Teacher = cl.Teacher,
-                                Location = cl.Location
-                            };
-
-                            infos.Add(lastInfo);
-                        }
-                        else
-                            lastInfo.EndTime = session.EndTime;
-                    }
-
-                var pName = "";
-
-                foreach (var info in infos) {
-                    if (pName != info.PeriodName) {
-                        pName = info.PeriodName;
-                        listBox.Items.Add(new ListBoxItem() {
-                            Content = new TextBlock() {
-                                Text = info.PeriodName.ToLower(),
-                                Margin = new Thickness() { Left = 12 }
-                            }
-                        });
-                    }
-
-                    var stackPanel = new StackPanel() {
-                        Margin = new Thickness() { Bottom = 17 }
-                    };
-
-                    stackPanel.Children.Add(new TextBlock() {
-                        Text = info.Name,
-                        Style = Resources["PhoneTextLargeStyle"] as Style
-                    });
-
-                    stackPanel.Children.Add(new TextBlock() {
-                        Text = info.Teacher,
-                        Style = Resources["PhoneTextSubtleStyle"] as Style
-                    });
-
-                    stackPanel.Children.Add(new TextBlock() {
-                        Text = (info.Location.Length > 0 ? info.Location + " " : "") + info.StartTime + "-" + info.EndTime,
-                        Style = Resources["PhoneTextSubtleStyle"] as Style
-                    });
-
-                    listBox.Items.Add(new ListBoxItem() {
-                        Content = stackPanel
-                    });
-                }
-
+            if (remain == 0) {
+                pivotItem.VerticalContentAlignment = VerticalAlignment.Center;
+                pivotItem.HorizontalContentAlignment = HorizontalAlignment.Center;
+                pivotItem.Content = emptyText;
+                //listBox.Visibility = Visibility.Collapsed;
+                //emptyText.Visibility = Visibility.Visible;
+                //continue;
+                return;
+            }
+            else {
+                pivotItem.VerticalContentAlignment = VerticalAlignment.Stretch;
+                pivotItem.HorizontalContentAlignment = HorizontalAlignment.Stretch;
+                pivotItem.Content = listBox;
+                //listBox.Visibility = Visibility.Visible;
+                //emptyText.Visibility = Visibility.Collapsed;
             }
 
+            ClassPeriodInfo lastInfo = null;
+
+            for (var i = 1; remain > 0; i++)
+                if (classes.ContainsKey(i)) {
+                    var cl = classes[i];
+                    var session = Schedule.GetSession(i);
+
+                    remain--;
+                    if (session == null)
+                        session = new Session() {
+                            StartTime = "",
+                            EndTime = ""
+                        };
+
+                    if (lastInfo == null || lastInfo.Name != cl.Name) {
+                        lastInfo = new ClassPeriodInfo() {
+                            Name = cl.Name,
+                            PeriodName = Schedule.GetSessionPeriodName(i),
+                            StartTime = session.StartTime,
+                            EndTime = session.EndTime,
+                            Teacher = cl.Teacher,
+                            Location = cl.Location
+                        };
+
+                        infos.Add(lastInfo);
+                    }
+                    else if (session.EndTime != "")
+                        lastInfo.EndTime = session.EndTime;
+                }
+
+            var pName = "";
+
+            foreach (var info in infos) {
+                if (pName != info.PeriodName) {
+                    pName = info.PeriodName;
+                    listBox.Items.Add(new ListBoxItem() {
+                        Content = new TextBlock() {
+                            Text = info.PeriodName.ToLower(),
+                            Margin = new Thickness() { Left = 12 }
+                        }
+                    });
+                }
+
+                var stackPanel = new StackPanel() {
+                    Margin = new Thickness() { Bottom = 17 }
+                };
+
+                stackPanel.Children.Add(new TextBlock() {
+                    Text = info.Name,
+                    Style = Resources["PhoneTextLargeStyle"] as Style
+                });
+
+                stackPanel.Children.Add(new TextBlock() {
+                    Text = info.Teacher,
+                    Style = Resources["PhoneTextSubtleStyle"] as Style
+                });
+
+                stackPanel.Children.Add(new TextBlock() {
+                    Text = (info.Location != "" ? info.Location + " " : "") + (info.StartTime != "" ? info.StartTime + "-" + info.EndTime : ""),
+                    Style = Resources["PhoneTextSubtleStyle"] as Style
+                });
+
+                listBox.Items.Add(new ListBoxItem() {
+                    Content = stackPanel
+                });
+            }
 
         }
 
         private bool GoLastWeek() {
             if (WeekDisplaying == 1) return false;
-            LoadClassScheduleForWeek(--WeekDisplaying);
+            LoadClassList(mainPivot.SelectedItem as PivotItem, --WeekDisplaying);
             return true;
         }
 
         private bool GoNextWeek() {
             if (Schedule.UniversityInfo == null || WeekDisplaying == Schedule.UniversityInfo.WeekCount) return false;
-            LoadClassScheduleForWeek(++WeekDisplaying);
+            LoadClassList(mainPivot.SelectedItem as PivotItem, ++WeekDisplaying);
             return true;
         }
 
@@ -255,10 +272,9 @@ namespace ClassSchedule {
                 }
             }
 
-            if (reload || WeekDisplaying != Time.ThisWeek)
-                LoadClassScheduleForWeek(WeekDisplaying = Time.ThisWeek);
-
+            WeekDisplaying = Time.ThisWeek;
             mainPivot.SelectedIndex = dayOfWeek;
+            LoadClassList(mainPivot.SelectedItem as PivotItem, WeekDisplaying);
         }
 
         private int GetDayOfWeek() {

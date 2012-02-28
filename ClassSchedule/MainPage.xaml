@@ -17,7 +17,7 @@
     <!--LayoutRoot is the root grid where all page content is placed-->
     <Grid x:Name="LayoutRoot" Background="Transparent">
         <!--Pivot Control-->
-        <controls:Pivot Title="CLASS SCHEDULE" Name="mainPivot" SelectionChanged="mainPivot_SelectionChanged"></controls:Pivot>
+        <controls:Pivot Title="CLASS SCHEDULE" Name="mainPivot" SelectionChanged="mainPivot_SelectionChanged" LoadedPivotItem="mainPivot_LoadedPivotItem"></controls:Pivot>
     </Grid>
 
     <phone:PhoneApplicationPage.ApplicationBar>
