@@ -80,6 +80,7 @@ namespace ClassSchedule
         }
 
         private static class BeforeWaitStatus {
+            public static bool SelectUniversity;
             public static bool UsernameTextBox;
             public static bool PasswordTextBox;
             public static bool VerifierTextBox;
@@ -88,13 +89,17 @@ namespace ClassSchedule
             //public static Visibility ImportProgressBar;
         }
 
+        private bool CanSelectUniveristy = true;
+
         private void Wait() {
+            BeforeWaitStatus.SelectUniversity = CanSelectUniveristy;
             BeforeWaitStatus.UsernameTextBox = usernameTextBox.IsEnabled;
             BeforeWaitStatus.PasswordTextBox = passwordTextBox.IsEnabled;
             BeforeWaitStatus.VerifierTextBox = verifierTextBox.IsEnabled;
             BeforeWaitStatus.ImportButton = importButton.IsEnabled;
             BeforeWaitStatus.VerifierImage = verifierImage.Source;
-            
+
+            CanSelectUniveristy = false;
             usernameTextBox.IsEnabled =
             passwordTextBox.IsEnabled =
             verifierTextBox.IsEnabled =
@@ -104,6 +109,7 @@ namespace ClassSchedule
         }
 
         private void CancelWait() {
+            CanSelectUniveristy = BeforeWaitStatus.SelectUniversity;
             usernameTextBox.IsEnabled = BeforeWaitStatus.UsernameTextBox;
             passwordTextBox.IsEnabled = BeforeWaitStatus.PasswordTextBox;
             verifierTextBox.IsEnabled = BeforeWaitStatus.VerifierTextBox;
@@ -170,7 +176,8 @@ namespace ClassSchedule
         }
 
         private void universityNameTextBlock_MouseLeftButtonDown(object sender, MouseButtonEventArgs e) {
-            NavigationService.Source = Uris.SelectUniversity;
+            if (CanSelectUniveristy)
+                NavigationService.Source = Uris.SelectUniversity;
         }
 
         private void usernameTextBox_KeyUp(object sender, KeyEventArgs e) {
