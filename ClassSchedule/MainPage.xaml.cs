@@ -115,10 +115,7 @@ namespace ClassSchedule {
 
         private void mainPivot_LoadedPivotItem(object sender, PivotItemEventArgs e) {
             var dayOfWeek = (int)e.Item.Tag;
-            Dispatcher.BeginInvoke(() => {
-                LoadClassList(mainPivot.Items[(dayOfWeek + 6) % 7] as PivotItem, WeekDisplaying - (dayOfWeek == 1 ? 1 : 0));
-                LoadClassList(mainPivot.Items[(dayOfWeek + 1) % 7] as PivotItem, WeekDisplaying + (dayOfWeek == 0 ? 1 : 0));
-            });
+            LoadSide(dayOfWeek);
         }
 
         private void LoadClassList(PivotItem pivotItem, int week) {
@@ -220,15 +217,26 @@ namespace ClassSchedule {
 
         }
 
+        private void LoadSide(int dayOfWeek) {
+            Dispatcher.BeginInvoke(() => {
+                LoadClassList(mainPivot.Items[(dayOfWeek + 6) % 7] as PivotItem, WeekDisplaying - (dayOfWeek == 1 ? 1 : 0));
+                LoadClassList(mainPivot.Items[(dayOfWeek + 1) % 7] as PivotItem, WeekDisplaying + (dayOfWeek == 0 ? 1 : 0));
+            });
+        }
+
         private bool GoLastWeek() {
             if (WeekDisplaying == 1) return false;
-            LoadClassList(mainPivot.SelectedItem as PivotItem, --WeekDisplaying);
+            var item = mainPivot.SelectedItem as PivotItem;
+            LoadClassList(item, --WeekDisplaying);
+            LoadSide((int)item.Tag);
             return true;
         }
 
         private bool GoNextWeek() {
             if (Schedule.UniversityInfo == null || WeekDisplaying == Schedule.UniversityInfo.WeekCount) return false;
-            LoadClassList(mainPivot.SelectedItem as PivotItem, ++WeekDisplaying);
+            var item = mainPivot.SelectedItem as PivotItem;
+            LoadClassList(item, ++WeekDisplaying);
+            LoadSide((int)item.Tag);
             return true;
         }
 
