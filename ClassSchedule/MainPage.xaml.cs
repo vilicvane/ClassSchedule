@@ -163,7 +163,7 @@ namespace ClassSchedule {
                             EndTime = ""
                         };
 
-                    if (lastInfo == null || lastInfo.Name != cl.Name || lastInfo.PeriodName != periodName) {
+                    if (lastInfo == null || lastInfo.Name != cl.Name || (periodName != null && lastInfo.PeriodName != periodName)) {
                         lastInfo = new ClassPeriodInfo() {
                             Name = cl.Name,
                             PeriodName = periodName,
