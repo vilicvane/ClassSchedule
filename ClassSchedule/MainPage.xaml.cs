@@ -115,6 +115,9 @@ namespace ClassSchedule {
 
         private void mainPivot_LoadedPivotItem(object sender, PivotItemEventArgs e) {
             var dayOfWeek = (int)e.Item.Tag;
+            var list = e.Item.Content as ListBox;
+            if (list != null)
+                list.ScrollIntoView(list.Items[0]);
             LoadSide(dayOfWeek);
         }
 
@@ -216,6 +219,7 @@ namespace ClassSchedule {
                     Content = stackPanel
                 });
             }
+
 
         }
 
