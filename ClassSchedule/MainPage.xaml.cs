@@ -154,6 +154,7 @@ namespace ClassSchedule {
                 if (classes.ContainsKey(i)) {
                     var cl = classes[i];
                     var session = Schedule.GetSession(i);
+                    var periodName = Schedule.GetSessionPeriodName(i);
 
                     remain--;
                     if (session == null)
@@ -162,10 +163,10 @@ namespace ClassSchedule {
                             EndTime = ""
                         };
 
-                    if (lastInfo == null || lastInfo.Name != cl.Name) {
+                    if (lastInfo == null || lastInfo.Name != cl.Name || lastInfo.PeriodName != periodName) {
                         lastInfo = new ClassPeriodInfo() {
                             Name = cl.Name,
-                            PeriodName = Schedule.GetSessionPeriodName(i),
+                            PeriodName = periodName,
                             StartTime = session.StartTime,
                             EndTime = session.EndTime,
                             Teacher = cl.Teacher,
@@ -177,6 +178,7 @@ namespace ClassSchedule {
                     else if (session.EndTime != "")
                         lastInfo.EndTime = session.EndTime;
                 }
+                else lastInfo = null;
 
             var pName = "";
 
