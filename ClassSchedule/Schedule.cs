@@ -20,6 +20,8 @@ namespace ClassSchedule {
         private static string classInfosPath = "ClassInfos";
         private static IsolatedStorageFile isf = IsolatedStorageFile.GetUserStoreForApplication();
 
+        public static UniversityListInfo UniversityListInfo { get; set; }
+
         private static UniversityInfo universityInfo;
         public static UniversityInfo UniversityInfo {
             get { return universityInfo; }
@@ -73,10 +75,14 @@ namespace ClassSchedule {
             return infos;
         }
 
-        public static Session GetSession(int n) {
+        public static Session GetSession(int week, int dayOfWeek, int n) {
             n--;
 
-            var periods = UniversityInfo.SessionPeriods;
+            var periods =
+                Time.IsSummer(week, dayOfWeek) && UniversityInfo.SummerSessionPeriods != null ?
+                UniversityInfo.SummerSessionPeriods :
+                UniversityInfo.SessionPeriods;
+
             for (var i = 0; i < periods.Length; i++) {
                 var sessions = periods[i].Sessions;
                 var count = sessions.Length;
@@ -89,7 +95,7 @@ namespace ClassSchedule {
             return null;
         }
 
-        internal static string GetSessionPeriodName(int n) {
+        internal static string GetSessionPeriodName(int week, int dayOfWeek, int n) {
             n--;
 
             var periods = UniversityInfo.SessionPeriods;

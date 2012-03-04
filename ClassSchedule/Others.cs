@@ -36,6 +36,7 @@ namespace ClassSchedule {
         public DateTime FirstWeek;
         public int WeekCount;
         public SessionPeriod[] SessionPeriods;
+        public SessionPeriod[] SummerSessionPeriods;
     }
 
     public class UniversityListInfo {
@@ -98,6 +99,17 @@ namespace ClassSchedule {
                     return 1;
                 return (int)(((DateTime.Today - Schedule.UniversityInfo.FirstWeek).TotalDays + 1) / 7);
             }
+        }
+
+        public static bool IsSummer(int week, int dayOfWeek) {
+            var days = (week - 1) * 7 + (dayOfWeek == 0 ? 7 : dayOfWeek);
+            var info = Schedule.UniversityInfo;
+            if (info == null) return false;
+            var date = info.FirstWeek.AddDays(days);
+            var summerStart = new DateTime(date.Year, 5, 1);
+            var summerEnd = new DateTime(date.Year, 9, 30);
+
+            return date >= summerStart && date <= summerEnd;
         }
     }
 

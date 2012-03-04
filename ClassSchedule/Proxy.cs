@@ -53,8 +53,11 @@ namespace ClassSchedule {
     public delegate void ProxyCallback(object value, ProxyException ex);
 
     public static class Proxy {
+#if DEBUG
+        private static string proxyBaseUrl = "http://localhost:53028/ClassScheduleProxy/Proxy.asmx/";// "http://csp.groinup.com/Proxy.asmx/";
+#else
         private static string proxyBaseUrl = "http://csp.groinup.com/Proxy.asmx/";
-
+#endif
         public static void ListUniversitis(ProxyCallback callback) {
             var request = new HttpRequest();
             request.Open("POST", proxyBaseUrl + "ListUniversities");

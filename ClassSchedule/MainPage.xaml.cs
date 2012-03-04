@@ -156,8 +156,8 @@ namespace ClassSchedule {
             for (var i = 1; remain > 0; i++)
                 if (classes.ContainsKey(i)) {
                     var cl = classes[i];
-                    var session = Schedule.GetSession(i);
-                    var periodName = Schedule.GetSessionPeriodName(i);
+                    var session = Schedule.GetSession(week, dayOfWeek, i);
+                    var periodName = Schedule.GetSessionPeriodName(week, dayOfWeek, i);
 
                     remain--;
                     if (session == null)

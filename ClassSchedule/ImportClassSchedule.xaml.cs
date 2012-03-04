@@ -28,25 +28,55 @@ namespace ClassSchedule
             //Navigation.ClearHistory(NavigationService);
 
             var info = Schedule.UniversityInfo;
-
-            if (info == null) {
+            var listInfo = Schedule.UniversityListInfo;
+            if (info == null && listInfo == null) {
                 NavigationService.Source = Uris.MainPage;
                 return;
             }
 
-            universityNameTextBlock.Text = info.Name;
+            int id;
+            string name;
 
-            verifierImage.Source = null;
-
-            if (info.HasVerifier) {
-                verifierTextBox.IsEnabled = true;
-                importButton.IsEnabled = false;
-                FetchVerifier();
+            if (listInfo != null) {
+                id = listInfo.Id;
+                name = listInfo.Name;
+                Schedule.UniversityListInfo = null;
             }
             else {
-                verifierTextBox.IsEnabled = false;
-                importButton.IsEnabled = true;
+                id = info.Id;
+                name = info.Name;
             }
+
+            universityNameTextBlock.Text = name;
+
+            verifierImage.Source = null;
+            verifierTextBox.IsEnabled = false;
+            importButton.IsEnabled = false;
+            importProgressBar.Visibility = Visibility.Visible;
+
+            Proxy.GetUniversityInfo(id, (value, ex) => {
+                Dispatcher.BeginInvoke(() => {
+                    if (ex == null) {
+                        info = Schedule.UniversityInfo = value as UniversityInfo;
+                        importProgressBar.Visibility = Visibility.Collapsed;
+
+                        if (info.HasVerifier) {
+                            verifierTextBox.IsEnabled = true;
+                            importButton.IsEnabled = false;
+                            FetchVerifier();
+                        }
+                        else {
+                            verifierTextBox.IsEnabled = false;
+                            importButton.IsEnabled = true;
+                        }
+
+                    }
+                    else {
+                        MessageBox.Show("failed to fetch the information of the university selected, please try again later.", "ERROR", MessageBoxButton.OK);
+                        new Navigation(NavigationService).BackToOrGoTo(Uris.MainPage);
+                    }
+                });
+            });
         }
 
         private bool fetchingVerifier = false;
@@ -201,6 +231,11 @@ namespace ClassSchedule
 
         private void verifierImage_MouseLeftButtonDown(object sender, MouseButtonEventArgs e) {
             FetchVerifier();
+        }
+
+        private void PhoneApplicationPage_Unloaded(object sender, RoutedEventArgs e) {
+            HttpRequest.AbortAll();
+            fetchingVerifier = false;
         }
     }
 }

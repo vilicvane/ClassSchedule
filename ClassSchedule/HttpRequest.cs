@@ -14,6 +14,7 @@ using System.Text;
 
 namespace ClassSchedule {
     public class HttpRequest {
+        private static List<HttpWebRequest> requests = new List<HttpWebRequest>();
         private HttpWebRequest request;
         private HttpWebResponse response;
         private static CookieContainer cookieContainer = new CookieContainer();
@@ -38,6 +39,7 @@ namespace ClassSchedule {
 
         public void Open(string method, string url) {
             request = WebRequest.Create(url) as HttpWebRequest;
+            requests.Add(request);
             request.Method = method;
             request.CookieContainer = cookieContainer;
 
@@ -65,7 +67,9 @@ namespace ClassSchedule {
                         catch (WebException e) {
                             response = e.Response as HttpWebResponse;
                         }
-                        Complete();
+                        if (response != null)
+                            Complete();
+                        requests.Remove(request);
                     }
                 }, null);
             });
@@ -79,6 +83,16 @@ namespace ClassSchedule {
                 }, null);
             }
             else GetResponse();
+        }
+
+        public void Abort() {
+            if (request != null)
+                request.Abort();
+        }
+
+        public static void AbortAll() {
+            foreach (var request in requests)
+                request.Abort();
         }
     }
 }

@@ -56,7 +56,7 @@ namespace ClassSchedule
                                 Text = info.Name,
                                 Style = App.Current.Resources["SelectListFont"] as Style
                             },
-                            Tag = info.Id
+                            Tag = info
                         });
 
                     universityLoadingProgressBar.Visibility = Visibility.Collapsed;
@@ -67,6 +67,12 @@ namespace ClassSchedule
         }
 
         private void universityList_SelectionChanged(object sender, SelectionChangedEventArgs e) {
+
+            Schedule.UniversityListInfo = (e.AddedItems[0] as ListBoxItem).Tag as UniversityListInfo;
+            
+            new Navigation(NavigationService).BackToOrGoTo(Uris.ImportClassSchedule);
+
+            /*
             if (e.AddedItems.Count == 0) return;
             universityLoadingProgressBar.Visibility = Visibility.Visible;
             universityList.IsEnabled = false;
@@ -84,8 +90,11 @@ namespace ClassSchedule
                     else MessageBox.Show("failed to fetch the information of the university selected, please try again.", "ERROR", MessageBoxButton.OK);
                 });
             });
+            */
+        }
 
-            //NavigationService.GoBack();
+        private void PhoneApplicationPage_Unloaded(object sender, RoutedEventArgs e) {
+            HttpRequest.AbortAll();
         }
     }
 }
