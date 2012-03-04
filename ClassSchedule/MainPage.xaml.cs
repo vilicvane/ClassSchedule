@@ -287,7 +287,9 @@ namespace ClassSchedule {
             }
 
             WeekDisplaying = Time.ThisWeek;
-            mainPivot.SelectedIndex = dayOfWeek;
+            mainPivotItemChanging = true;
+            mainPivot.SelectedItem = mainPivot.Items[dayOfWeek];
+            mainPivotItemChanging = false;
             LoadClassList(mainPivot.SelectedItem as PivotItem, WeekDisplaying);
         }
 

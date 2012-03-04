@@ -134,6 +134,6 @@
   -->
   <ProjectExtensions />
   <PropertyGroup>
-    <PostBuildEvent>copy $(TargetDir)$(TargetName).xap $(SolutionDir)</PostBuildEvent>
+    <PostBuildEvent>copy "$(TargetDir)$(TargetName).xap" "$(SolutionDir)"</PostBuildEvent>
   </PropertyGroup>
 </Project>

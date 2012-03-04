@@ -96,7 +96,7 @@ namespace ClassSchedule {
             get {
                 if (Schedule.UniversityInfo == null)
                     return 1;
-                return (int)((DateTime.Today - Schedule.UniversityInfo.FirstWeek).TotalDays / 7) + 1;
+                return (int)(((DateTime.Today - Schedule.UniversityInfo.FirstWeek).TotalDays + 1) / 7);
             }
         }
     }
