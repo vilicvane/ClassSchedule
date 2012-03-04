@@ -67,8 +67,11 @@ namespace ClassSchedule
         }
 
         private void universityList_SelectionChanged(object sender, SelectionChangedEventArgs e) {
+            var newInfo = (e.AddedItems[0] as ListBoxItem).Tag as UniversityListInfo;
+            if (Schedule.UniversityInfo != null && Schedule.UniversityInfo.Id != newInfo.Id)
+                Schedule.ClassInfos = null;
 
-            Schedule.UniversityListInfo = (e.AddedItems[0] as ListBoxItem).Tag as UniversityListInfo;
+            Schedule.UniversityListInfo = newInfo;
             
             new Navigation(NavigationService).BackToOrGoTo(Uris.ImportClassSchedule);
 

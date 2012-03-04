@@ -186,7 +186,7 @@ namespace ClassSchedule {
             var pName = "";
 
             foreach (var info in infos) {
-                if (pName != info.PeriodName) {
+                if (info.PeriodName != null && pName != info.PeriodName) {
                     pName = info.PeriodName;
                     listBox.Items.Add(new ListBoxItem() {
                         Content = new TextBlock() {
